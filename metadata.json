@@ -1,0 +1,6 @@
+{
+  "name": "Cadence Studio",
+  "description": "Convert scripts into studio-grade voiceovers with predefined voice samples, vocal direction, and instant WAV export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
