@@ -74,6 +74,19 @@ function createDialogueTurnsFromLanguage(language: LanguageCode): DialogueTurn[]
   }));
 }
 
+async function safeReadJson<T>(response: Response): Promise<T> {
+  const raw = await response.text();
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    throw new Error(
+      response.ok
+        ? 'Received an unexpected non-JSON response from the server.'
+        : `Server returned status ${response.status}. Please try again.`
+    );
+  }
+}
+
 export default function App() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('studio');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -252,11 +265,11 @@ export default function App() {
         if (!blob) {
           setLoadingSampleId(voice.id);
           const response = await fetch(`/api/tts/sample/${encodeURIComponent(voice.id)}`);
-          const payload = (await response.json()) as {
+          const payload = await safeReadJson<{
             audioBase64?: string;
             mimeType?: string;
             error?: string;
-          };
+          }>(response);
           if (!response.ok || !payload.audioBase64) {
             throw new Error(payload.error || 'Unable to load predefined voice sample.');
           }
@@ -351,14 +364,14 @@ export default function App() {
         body: JSON.stringify(payload),
       });
 
-      const data = (await response.json()) as {
+      const data = await safeReadJson<{
         audioBase64?: string;
         mimeType?: string;
         durationSec?: number;
         byteLength?: number;
         voiceLabel?: string;
         error?: string;
-      };
+      }>(response);
 
       if (!response.ok || !data.audioBase64) {
         throw new Error(data.error || 'Voiceover generation failed.');

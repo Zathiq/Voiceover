@@ -566,7 +566,22 @@ async function startServer() {
     }
   });
 
-  if (process.env.NODE_ENV !== 'production') {
+  // Ensure unknown /api routes always return JSON rather than SPA HTML
+  app.use('/api', (_req: Request, res: Response) => {
+    res.status(404).json({ error: 'API route not found.' });
+  });
+
+  // JSON error handler for malformed JSON bodies or unexpected Express errors
+  app.use((err: unknown, _req: Request, res: Response, _next: express.NextFunction) => {
+    console.error('Server error:', err);
+    const message = err instanceof Error ? err.message : 'Unexpected server error.';
+    res.status(400).json({ error: message });
+  });
+
+  const isProduction =
+    process.env.NODE_ENV === 'production' || path.basename(__filename) === 'server.js';
+
+  if (!isProduction) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
